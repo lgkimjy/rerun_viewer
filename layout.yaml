@@ -1,0 +1,111 @@
+# Default Rerun layout. Dataset names are HDF5 paths without a leading slash.
+# A plot is skipped when none of its series exist in the input recording.
+scene:
+  enabled: true
+  name: Robot scene
+  origin: world
+  # Fixed initial camera in world coordinates. The Viewer remains interactive.
+  initial_view:
+    enabled: true
+    position: [1.75, -1.5, 1.0]
+    look_target: [0.06, -0.03, 0.7]
+
+  hidden_geoms:
+    - ground
+
+  com:
+    enabled: false
+    dataset: fbk/p_CoM
+    radius: 0.035
+    color: [255, 210, 30]
+
+  contact_forces:
+    - name: actual
+      enabled: false
+      positions: fbk/contact_positions
+      vectors: fbk/contact_forces
+      count: fbk/contact_count
+      scale: 0.002
+      radius: 0.008
+      color: [255, 80, 40]
+
+    - name: desired
+      enabled: false
+      positions: ctrl/contact_positions_d
+      vectors: ctrl/contact_forces_d
+      count: ctrl/contact_count
+      scale: 0.002
+      radius: 0.008
+      color: [50, 140, 255]
+
+# Component colors are assigned in order. For 3-vectors this gives x/y/z the
+# familiar red/green/blue colors. Longer vectors continue through the palette.
+component_colors:
+  - [230, 65, 65]    # x / component 0: red
+  - [55, 180, 75]    # y / component 1: green
+  - [55, 100, 225]   # z / component 2: blue
+  - [245, 145, 35]   # component 3: orange
+  - [145, 80, 200]   # component 4: purple
+  - [45, 190, 190]   # component 5: cyan
+  - [225, 75, 170]   # component 6: magenta
+  - [190, 170, 35]   # component 7: yellow
+  - [145, 95, 55]    # component 8: brown
+  - [125, 125, 125]  # component 9: gray
+
+# Rerun 0.37 has no dashed lines. Feedback uses solid lines; commands use
+# markers with their connecting lines hidden. Earlier matching rules win.
+styles:
+  - match: fbk/*
+    mode: lines
+    width: 1.0
+
+  - match: ctrl/*
+    mode: points
+    marker_size: 1.5
+
+  - match: param/*
+    mode: lines
+    width: 1.5
+
+  - match: err/*
+    mode: lines
+    width: 1.5
+
+# Error series exist only in the RRD. They are calculated from H5 datasets
+# while converting; subtract means lhs - rhs.
+err:
+  - path: err/jpos
+    operation: subtract
+    lhs: ctrl/jpos_d
+    rhs: fbk/jpos
+
+plots:
+  - name: Joint position — feedback vs command
+    series:
+      - path: fbk/jpos
+        indices: [0, 1, 2, 3, 4, 5]
+        name: [left_hip_pitch_joint, left_hip_roll_joint, left_hip_yaw_joint, left_knee_joint, left_ankle_pitch_joint, left_ankle_roll_joint]
+      - path: ctrl/jpos_d
+        indices: [0, 1, 2, 3, 4, 5]
+        name: [left_hip_pitch_joint, left_hip_roll_joint, left_hip_yaw_joint, left_knee_joint, left_ankle_pitch_joint, left_ankle_roll_joint]
+
+  - name: Joint position error — desired minus feedback
+    series:
+      - path: err/jpos
+        indices: [0, 1, 2, 3, 4, 5]
+        name: [left_hip_pitch_joint, left_hip_roll_joint, left_hip_yaw_joint, left_knee_joint, left_ankle_pitch_joint, left_ankle_roll_joint]
+
+  # - name: Joint velocity — feedback vs command
+  #   series:
+  #     - fbk/jvel
+  #     - ctrl/jvel_d
+
+  - name: Base linear velocity — feedback vs command
+    series:
+      - fbk/pdot_B
+      - ctrl/lin_vel_d
+
+  - name: Base angular velocity — feedback vs command
+    series:
+      - fbk/omega_B
+      - ctrl/ang_vel_d
